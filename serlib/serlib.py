@@ -1,20 +1,35 @@
 import json
 import logging
-from typing import Optional, Union
+from typing import Optional, Union, NamedTuple, Type
 import argparse
 
-
 Primitive = Union[int, str, bool, float]
-Serializable = Union[Primitive, list]
-# List[Primitive|Struct|Dict]
+Struct = dict[str, list[Primitive] | Primitive | Optional[Primitive]]
+
+Serializable = Struct | list[Struct]
+
+def _is_namedtuple(obj) -> bool:
+    return (
+            isinstance(obj, tuple) and
+            hasattr(obj, '_asdict') and
+            hasattr(obj, '_fields')
+    )
 
 
 def to_json(obj: Serializable) -> str:
-    return json.dumps(obj)
+    if _is_namedtuple(obj):
+        return json.dumps({obj.__class__.__name__: obj._asdict()})
+    else:
+        return json.dumps(obj)
 
 
-def from_json(data: str) -> Serializable:
-    return json.loads(data)
+def from_json(data: str, decodable: dict[str, Type]) -> Serializable:
+    loaded = json.loads(data)
+    if len(loaded) == 1:
+        key = next(iter(loaded))
+        if key in decodable.keys():
+            return decodable[key](**loaded[key])
+    return loaded
 
 
 def setup(argv) -> argparse.Namespace:
@@ -22,7 +37,7 @@ def setup(argv) -> argparse.Namespace:
         description="This is a Python 3 project.")
     parser.add_argument("--name", type=str, required=False,
                         help="Your name, for example 'Margaret'.")
-    parser.add_argument("-v", "--verbose",  action="store_true",
+    parser.add_argument("-v", "--verbose", action="store_true",
                         help="Enable verbose logging.")
     return parser.parse_args(argv)
 
