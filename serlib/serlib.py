@@ -1,6 +1,20 @@
+import json
 import logging
-from typing import Optional
+from typing import Optional, Union
 import argparse
+
+
+Primitive = Union[int, str, bool, float]
+Serializable = Union[Primitive, list]
+# List[Primitive|Struct|Dict]
+
+
+def to_json(obj: Serializable) -> str:
+    return json.dumps(obj)
+
+
+def from_json(data: str) -> Serializable:
+    return json.loads(data)
 
 
 def setup(argv) -> argparse.Namespace:
