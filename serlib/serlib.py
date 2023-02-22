@@ -1,14 +1,23 @@
 import json
 import logging
-from typing import Optional, Union, NamedTuple, Type
+from typing import Optional, Union, Type, cast, NamedTuple
 import argparse
+
 
 Primitive = Union[int, str, bool, float]
 Struct = dict[str, list[Primitive] | Primitive | Optional[Primitive]]
-
 Serializable = Struct | list[Struct]
 
-def _is_namedtuple(obj) -> bool:
+
+TYPE_MAP: dict[str, Type] = {}
+
+
+def parsable(type_def: Type):
+    TYPE_MAP[type_def.__name__] = type_def
+    return type_def
+
+
+def _is_namedtuple(obj: Serializable) -> bool:
     return (
             isinstance(obj, tuple) and
             hasattr(obj, '_asdict') and
@@ -18,14 +27,16 @@ def _is_namedtuple(obj) -> bool:
 
 def to_json(obj: Serializable) -> str:
     if _is_namedtuple(obj):
-        return json.dumps({obj.__class__.__name__: obj._asdict()})
+        nt_dict = cast(NamedTuple, obj)._asdict()
+        return json.dumps({obj.__class__.__name__: nt_dict})
     else:
         return json.dumps(obj)
 
 
-def from_json(data: str, decodable: dict[str, Type]) -> Serializable:
+def from_json(data: str, decodable: Optional[dict[str, Type]] = None
+              ) -> Serializable:
     loaded = json.loads(data)
-    if len(loaded) == 1:
+    if decodable and len(loaded) == 1:
         key = next(iter(loaded))
         if key in decodable.keys():
             return decodable[key](**loaded[key])

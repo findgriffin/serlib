@@ -2,6 +2,7 @@ import unittest
 from typing import NamedTuple, Optional
 
 from serlib import serlib
+from serlib.serlib import parsable
 
 
 class TestPrimitives(unittest.TestCase):
@@ -37,8 +38,10 @@ class TestPrimitives(unittest.TestCase):
         final = serlib.from_json(serialized)
         self.assertEqual(original, final)
 
+
 class TestStruct(unittest.TestCase):
     def test_simple_struct(self):
+        @parsable
         class SimpleStruct(NamedTuple):
             one: int
             two: str
@@ -46,12 +49,13 @@ class TestStruct(unittest.TestCase):
             optional: Optional[str] = None
 
         original = SimpleStruct(1, 'two', True)
-        expected = """{"SimpleStruct": {"one": 1, "two": "two", "three": true, "optional": null}}"""
+        expected = """{"SimpleStruct": {"one": 1, "two": "two", """ + \
+                   """"three": true, "optional": null}}"""""
         serialized = serlib.to_json(original)
         self.assertEqual(expected, serialized)
-        final = serlib.from_json(serialized, {SimpleStruct.__name__: SimpleStruct})
+        final = serlib.from_json(serialized,
+                                 {SimpleStruct.__name__: SimpleStruct})
         self.assertEqual(original, final)
-
 
 
 class TestStub(unittest.TestCase):
