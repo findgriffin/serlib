@@ -11,7 +11,7 @@ style:
 	flake8 serlib tests
 
 types:
-	mypy .
+	mypy serlib tests
 
 test:
 	coverage run --source serlib -m unittest discover
