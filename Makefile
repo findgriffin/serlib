@@ -1,11 +1,14 @@
 
 build: style types test
 
-install:
+venv/bin:
+	python3.11 -m venv venv
+
+install: venv/bin
 	pip3 install -r requirements.txt
 
 style:
-	flake8
+	flake8 serlib tests
 
 types:
 	mypy .
